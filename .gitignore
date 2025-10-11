@@ -2,4 +2,4 @@
 __pycache__/
 .env
 test*
-user_resumes/*
+user_resumes/*.pdf
