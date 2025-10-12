@@ -6,11 +6,10 @@ from scripts.parse_resume_Gemini import runjob
 
 theme = get_theme()
 
-currdata = pd.read_csv("src/mdData.csv").sort_values(by='candidate_score', ascending=False).to_html(render_links=True, escape=True)
+currdata = pd.read_csv("src/mdData.csv").sort_values(by='candidate_score', ascending=False).reset_index(drop = True).to_html(render_links=True, escape=True)
 
 def refreshhtmlfunc():
-    global currdata
-    currdata = pd.read_csv("src/mdData.csv").to_html(render_links=True, escape=True)
+    return pd.read_csv("src/mdData.csv").sort_values(by='candidate_score', ascending=False).reset_index(drop = True).to_html(render_links=True, escape=True)
 
 # Main page
 with gr.Blocks(theme, title="SmartResumeScreener") as demo:
@@ -40,6 +39,9 @@ with demo.route(name="Use Gemini API", path="geminiapi", show_in_navbar=True):
 with demo.route(name="View Parsed Resumes", path="ViewParsed", show_in_navbar=True):
     gr.Button("Back to Main", link="/")
     refrshhtml = gr.Button("Refresh")
-    gr.HTML(value = currdata)
+    htmldisplay = gr.HTML(value = currdata)
+    
+    refrshhtml.click(fn=refreshhtmlfunc, outputs=[htmldisplay])
+    
 
 demo.launch()
