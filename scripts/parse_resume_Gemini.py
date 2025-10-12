@@ -142,7 +142,11 @@ def runjob(jd_text):
     # load parsed resume data
     userdata = pd.read_csv("src/mdData.csv")
     
+    yield "Starting Execution"
+    
     userdata = analyze_resume_pdf(jd_text, userdata)
     
     userdata.reset_index(drop=True)
     userdata.to_csv("src/mdData.csv", index=False)
+    
+    yield "Completed Parsing. You can refresh the table."
