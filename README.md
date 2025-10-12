@@ -39,6 +39,13 @@ For the model, we can assume roleplay by prompting something like:
 
 The output can be then post-processed, augmented and interted into the database.
 
+## Run
+To run, navigate to the directory where the files are cloned. Type
+
+`python Main.py`
+
+it will open the Demo on localhost
+
 ### [Demo Video Link]()
 
 Thank you.
