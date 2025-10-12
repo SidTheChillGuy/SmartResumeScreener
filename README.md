@@ -18,6 +18,8 @@ A script runs to mark the files to be parsed.\
 The files are uploaded and analysed by Model one-by-one. The data is inserted into the database file. Once a file is parsed, it can be moved to a different folder.\
 The data is displayed as a HTML table in Descending order of scores achieved.
 
+![Architecture](src/arch_.jpg)
+
 ## Prompts
 A major limitation that the model may face while performing this task is lack of context window and output token limit per chat.\
 Gemini Models support 1 Million context window with 16K output tokens, so we can use it.
