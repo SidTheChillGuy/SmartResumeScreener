@@ -35,10 +35,6 @@ JSON_SCHEMA = {
             "type": "integer",
             "description": "A score from 0 to 100 representing how well the candidate's skills and experience from the attached resume PDF match the job description."
         },
-        "summary": {
-            "type": "string",
-            "description": "A brief two-sentence summary explaining whether the candidate is suitable for the role or not, and why."
-        },
         "strengths": {
             "type": "array",
             "items": {"type": "string"},
@@ -53,9 +49,18 @@ JSON_SCHEMA = {
             "type": "array",
             "items": {"type": "string"},
             "description": "A list of important keywords from the job description that were not found in the resume."
-        }
+        },
+        "shortlist_status": {
+            "type": "CustomObject",
+            "items": {"Yes", "No"},
+            "description": "Return whether the candidate is shortlisted or not."
+        },
+        "shortlist_summary": {
+            "type": "string",
+            "description": "A brief summary explaining why the candidate was shortlisted/not shortlisted"
+        },
     },
-    "required": ["candidate_name", "candidate_score", "summary", "strengths", "weaknesses", "missing_keywords"]
+    "required": ["candidate_name", "candidate_score", "strengths", "weaknesses", "missing_keywords", "shortlist_status", "shortlist_summary"]
 }
 
 # template to create a prompt
