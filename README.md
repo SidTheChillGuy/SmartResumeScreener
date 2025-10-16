@@ -48,6 +48,6 @@ To run, navigate to the directory where the files are cloned. Type
 
 it will open the Demo on localhost
 
-### [Demo Video Link]()
+### [Demo Video Link](https://youtu.be/FXuWz0mI8n8)
 
 Thank you.
