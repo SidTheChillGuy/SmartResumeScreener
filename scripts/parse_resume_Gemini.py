@@ -87,7 +87,11 @@ def get_jd_prompt(jd_text):
 
 # move the parsed files
 def movefile(xmp):
-    os.rename(f"user_resumes_unparsed/{xmp}", f"user_resumes_parsed/{xmp}")
+    try:
+        os.rename(f"user_resumes_unparsed/{xmp}", f"user_resumes_parsed/{xmp}")
+    except:
+        os.remove(f"user_resumes_parsed/{xmp}")
+        os.rename(f"user_resumes_unparsed/{xmp}", f"user_resumes_parsed/{xmp}")
 
 # cleaning the Json formatting from LLM
 def clean_output(response):
@@ -99,13 +103,20 @@ def clean_output(response):
     
     if start_index != -1 and end_index != -1 and end_index > start_index:
         json_string = raw_text[start_index : end_index + 1]
-        result = json.loads(json_string)
+        try:
+            result = json.loads(json_string)
+        except:
+            with open("dump.txt","w") as f:
+                f.writelines(result)
+            f.flush()
+            f.close()
+            exit
 
     return result
 
 # processing the output json
 def process_output(f):
-    for i in ["candidate_name","summary","strengths", "weaknesses","missing_keywords"]:
+    for i in ["candidate_name", "strengths", "weaknesses", "missing_keywords", "shortlist_status", "shortlist_summary"]:
         if type(f[i])==list:
             f[i] = [(" ".join(f[i]))]
         else:
@@ -115,7 +126,7 @@ def process_output(f):
 
 
 # actual function
-def analyze_resume_pdf(jd_text, userdata):
+def analyze_resume_pdf(jd_text):
     # load all the unparsed files
     resfiles = [i for i in os.walk("user_resumes_unparsed")][0][2]
     
@@ -123,9 +134,12 @@ def analyze_resume_pdf(jd_text, userdata):
         if i[0] == ".":
             continue
         
+        # load parsed resume data
+        userdata = pd.read_csv("src/mdData.csv")
+        
         prompt = get_jd_prompt(jd_text)
         file = client.files.upload(file=f"user_resumes_unparsed/{i}")
-
+        
         response = client.models.generate_content(
             model=MODEL_NAME,
             contents=[prompt, file]
@@ -140,18 +154,17 @@ def analyze_resume_pdf(jd_text, userdata):
         
         movefile(i)
         
-    return userdata
+        userdata.reset_index(drop=True)
+        userdata.to_csv("src/mdData.csv", index=False)
+        
+        yield f"Parsed resume: {i}"
 
 
 def runjob(jd_text):
-    # load parsed resume data
-    userdata = pd.read_csv("src/mdData.csv")
-    
+        
     yield "Starting Execution"
     
-    userdata = analyze_resume_pdf(jd_text, userdata)
+    for i in analyze_resume_pdf(jd_text):
+        yield i
     
-    userdata.reset_index(drop=True)
-    userdata.to_csv("src/mdData.csv", index=False)
-    
-    yield "Completed Parsing. You can refresh the table."
+    yield "Completed!"

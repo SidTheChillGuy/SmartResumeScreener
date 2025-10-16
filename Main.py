@@ -1,7 +1,7 @@
 import gradio as gr
 import pandas as pd
 from scripts.theme_load import get_theme
-from scripts.savefileunparsed import save_files
+from scripts.savefileunparsed import save_files_unparsed
 from scripts.parse_resume_Gemini import runjob
 
 theme = get_theme()
@@ -26,14 +26,14 @@ with gr.Blocks(theme, title="SmartResumeScreener") as demo:
 with demo.route(name="Use Gemini API", path="geminiapi", show_in_navbar=True):
     with gr.Row():
         with gr.Column():
-            fileupload = gr.File(label="Upload 1 or more Resume",file_count="multiple",file_types=[".pdf"])
+            fileupload = gr.File(label="Upload 1 or more Resume",file_count="multiple",file_types=[".pdf", ".txt", ".rtf", ".docx"])
             fileuploadoutput = gr.Textbox(label="Saved File Paths", lines=5)
         JDbox = gr.Textbox(label="Job Description", placeholder="Enter Job Description", max_lines=12,)
     calcfitnessbutton = gr.Button(value="Calculate resume fitness scores")
     gr.Button(value="Go to Home Page", link="/")
     
     # logic
-    fileupload.upload(show_progress='full', fn=save_files, inputs=[fileupload], outputs=[fileuploadoutput])
+    fileupload.upload(show_progress='full', fn=save_files_unparsed, inputs=[fileupload], outputs=[fileuploadoutput])
     calcfitnessbutton.click(fn=runjob, inputs=[JDbox], outputs=[fileuploadoutput])
 
 with demo.route(name="View Parsed Resumes", path="ViewParsed", show_in_navbar=True):

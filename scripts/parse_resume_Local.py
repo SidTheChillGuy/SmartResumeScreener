@@ -95,7 +95,7 @@ path = 'OpenGVLab/InternVL3-8B'
 model = AutoModel.from_pretrained(
     path,
     torch_dtype=torch.bfloat16,
-    load_in_8bit=False,
+    load_in_8bit=True, # load 8 bit mode
     low_cpu_mem_usage=True,
     use_flash_attn=True,
     trust_remote_code=True,
@@ -116,10 +116,6 @@ JSON_SCHEMA = {
             "type": "integer",
             "description": "A score from 0 to 100 representing how well the candidate's skills and experience from the attached resume PDF match the job description."
         },
-        "summary": {
-            "type": "string",
-            "description": "A brief two-sentence summary explaining whether the candidate is suitable for the role or not, and why."
-        },
         "strengths": {
             "type": "array",
             "items": {"type": "string"},
@@ -134,10 +130,20 @@ JSON_SCHEMA = {
             "type": "array",
             "items": {"type": "string"},
             "description": "A list of important keywords from the job description that were not found in the resume."
-        }
+        },
+        "shortlist_status": {
+            "type": "CustomObject",
+            "items": {"Yes", "No"},
+            "description": "Return whether the candidate is shortlisted or not."
+        },
+        "shortlist_summary": {
+            "type": "string",
+            "description": "A brief summary explaining why the candidate was shortlisted/not shortlisted"
+        },
     },
-    "required": ["candidate_name", "candidate_score", "summary", "strengths", "weaknesses", "missing_keywords"]
+    "required": ["candidate_name", "candidate_score", "strengths", "weaknesses", "missing_keywords", "shortlist_status", "shortlist_summary"]
 }
+
 
 # template to create a prompt
 def get_jd_prompt(jd_text):
@@ -181,7 +187,7 @@ def clean_output(response):
 
 # processing the output json
 def process_output(f):
-    for i in ["candidate_name","summary","strengths", "weaknesses","missing_keywords"]:
+    for i in ["candidate_name", "strengths", "weaknesses", "missing_keywords", "shortlist_status", "shortlist_summary"]:
         if type(f[i])==list:
             f[i] = [(" ".join(f[i]))]
         else:
@@ -191,7 +197,7 @@ def process_output(f):
 
 
 # actual function
-def analyze_resume_pdf(jd_text, userdata):
+def analyze_resume_pdf(jd_text):
     # load all the unparsed files
     resfiles = [i for i in os.walk("user_resumes_unparsed")][0][2]
     
@@ -199,11 +205,15 @@ def analyze_resume_pdf(jd_text, userdata):
         if i[0] == ".":
             continue
         
+        # load parsed resume data
+        userdata = pd.read_csv("src/mdData.csv")
+        
+        prompt = get_jd_prompt(jd_text)
+        
         # set the max number of tiles in `max_num`
         pixel_values = load_image(convert_from_path("user_resumes_unparsed/" + i)[0], max_num=12).to(torch.bfloat16).cuda()
         generation_config = dict(max_new_tokens=10000, do_sample=True)
         
-        prompt = get_jd_prompt(jd_text)
         question = f'<image>\nGiven is the resume file.\n{prompt}'
         response = model.chat(tokenizer, pixel_values, question, generation_config)
         
@@ -220,14 +230,9 @@ def analyze_resume_pdf(jd_text, userdata):
 
 
 def runjob(jd_text):
-    # load parsed resume data
-    userdata = pd.read_csv("src/mdData.csv")
-    
+        
     yield "Starting Execution"
     
-    userdata = analyze_resume_pdf(jd_text, userdata)
-    
-    userdata.reset_index(drop=True)
-    userdata.to_csv("src/mdData.csv", index=False)
+    yield analyze_resume_pdf(jd_text)
     
     yield "Completed Parsing. You can refresh the table."
